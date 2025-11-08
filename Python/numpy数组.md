@@ -1,0 +1,345 @@
+# 1.NumPy Array 对象
+ndarray类：包含同质数组
+
+| 属性    |               |
+| ----- | ------------- |
+| shape | 数组每个维度元素数量的元组 |
+| size  | 元素总数          |
+| ndim  | 维度数量          |
+| dtype | 元素数据类型        |
+## 1.1 数据类型
+| 类型  | int | uint     | bool | float | complex |
+| --- | --- | -------- | ---- | ----- | ------- |
+|     | 整数  | unsigned | 布尔   | 浮点    | 负数      |
+
+创建特定类型array
+```python
+data=np.array([1,2,3],dtype=np.int)#or float/complex
+```
+改变类型
+```python
+data=np.array(data,dtype=np.float)
+#或者
+data.astype(np.float)
+```
+
+自动类型转换：根据计算需要，int自动转成float或complex
+某些计算必须预先指定类型
+```python
+np.sqrt(np.array([-1,0,1],dtype=complex))
+```
+
+实部和虚部：
+```python
+data.real
+data.imag
+#结果仍为array
+```
+## 1.2 数组数据顺序
+对于二维数组：
+1. 行主序：逐行储存数据(`order='C'`)
+2. 列主序：逐列储存数据(`order='F'`)
+属性：`strides`
+表征索引改变时，内存偏移量的改变
+改变`strides`，新的ndarray对象。例如转置。
+新的ndarray对象和原数组引用相同的数据，称为视图。改变新ndarray对象，会改变原数组数据。
+# 2.创建数组
+
+## 2.1 常用函数
+
+| np.arange       | 均匀间隔数组，指定head, tail, interval    |
+| --------------- | -------------------------------- |
+| np.array        | 从python可遍历序列创建array              |
+| np.zeros        | 创建指定维度和类型的矩阵，以0填充                |
+| np.ones         | ~~ ，以1填充                         |
+| np.diag         | 创建对角矩阵，指定对角元素                    |
+| np.linspace     | 均匀间隔数组，指定head, tail, number      |
+| np.logspace     | 等比数列数组，指定head, tail, number      |
+| np.meshgrid     | 从一维数组，生成坐标矩阵                     |
+| np.random.rand  | 生成$$0,1$$之间的随机数矩阵，也可使用其他random函数 |
+| np.fromfunction | 从函数返回值创建数组                       |
+## 2.2 常量填充
+```python
+#以0填充
+x1=np.zreos((5,6))
+#以1填充
+x2=np.ones((6,8))
+#以特定值填充
+x3=np.fill((6,7),3.5)
+```
+填充默认`double`，使用`dtype`改变类型
+`np.empty()`创建未初始化的数组
+## 2.3 增量序列
+均匀分布
+```python
+x1=np.arange(1,100,1)#与range()相似，指定步长
+x2=np.linspace(1,100,100)#指定点数量
+```
+指数分布
+```python
+x3=np.logspace(1,10,100,base=np.e)
+#从1到100取100个值，在求对于e的指数。(底数默认10)
+```
+## 2.4 网格数组
+使用函数`np.meshgrid()`生成多维坐标网格
+```python
+x=np.array([-1,0,1])
+y=np.array([-2,0,2])
+X,Y=np.meshgrid(x,y)
+#输出结果
+X=[[-1  0  1]
+   [-1  0  1]
+   [-1  0  1]]
+Y=[[-2 -2 -2]
+   [ 0  0  0]
+   [ 2  2  2]]
+```
+一般用于绘制三维曲面图
+## 2.5 创建随机元素数组
+`np.random`模块
+`rand(sz1,sz2,……)`：元素值为$$0,1]随机数的矩阵
+`randint(min,max,[sz1,sz2,……])`：元素值为$$min,max]中的随机整数
+`uniform(min,max,[sz1,sz2,……])`：min,max]之间均匀取样
+`choice(seq,[sz1,sz2,……])`：序列中随机取样
+还有其他`random`分布函数
+## 2.6 函数创建
+`np.fromfunction(func,[sz1,sz2,……],dtype=)`
+函数接收参数为`[sz1,sz2,……]`的网格数组，返回值为函数返回的数组
+## 2.7 创建矩阵
+除上述函数外，还有
+`np.indentity(dim)`：创建维度为ndim的单位阵
+`np.eye(ndim,k=offset)`：单位阵进行偏移
+
+# 3.索引和切片
+## 3.1 一维数组
+切片操作与list完全相同，使用`[]`和`:`进行。
+## 3.2多维数组
+通过对不同维度的切片，可以取出特定部分的子矩阵
+```python
+f=lambda m,n: n+10*m
+A=np.fromfunction(f,[6,6],dtype=int)
+A
+array([[ 0,  1,  2,  3,  4,  5],
+       [10, 11, 12, 13, 14, 15],
+       [20, 21, 22, 23, 24, 25],
+       [30, 31, 32, 33, 34, 35],
+       [40, 41, 42, 43, 44, 45],
+       [50, 51, 52, 53, 54, 55]])
+#取出左上角矩阵
+A[:3,:3]
+array([[ 0,  1,  2],
+	   [10, 11, 12],
+       [20, 21, 22]])
+#改变步长，可以取出不连续矩阵
+A[::2,::2]
+array([[ 0,  2,  4],
+       [20, 22, 24],
+       [40, 42, 44]])
+```
+## 3.3 视图
+切片取出的数组是原数组的视图，即使用同样的一块数据。视图数据改变，原数组数据也改变。
+```python
+B=A[1:5,2:5]
+B[:,:]=0
+A
+array([[ 0,  1,  2,  3,  4,  5],
+       [10, 11,  0,  0,  0, 15],
+       [20, 21,  0,  0,  0, 25],
+       [30, 31,  0,  0,  0, 35],
+       [40, 41,  0,  0,  0, 45],
+       [50, 51, 52, 53, 54, 55]])
+```
+创造一个副本，需使用`copy()`方法
+```python
+B=A[1:5,2:5].copy()
+```
+## 3.4 花式索引和布尔索引
+花式索引(fancy indexing)：使用另一个ndarray或者整数序列进行索引。
+```python
+A=np.range(1,10,1)
+A
+array([1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+A[[1,3,7]]   
+array([2, 4, 8])
+```
+布尔索引：对于每个元素，判断其为True or False确定是否取出此元素。
+通常用去取出满足特定条件的元素，或对特定条件的元素进行修改。
+```python
+A=np.arange(1,10,1)
+A[A>5] 
+array([6, 7, 8, 9])
+```
+\*使用花式索引和布尔索引进行创建子矩阵时，会创建一个新副本。
+
+# 4.调整形状和大小
+**重排**：
+`np.reshape()`或`ndarray.reshape()`
+不改变元素个数和排列方式，仅仅改变矩阵的strides属性
+```python
+data=np.array([[1,2],[3,4]])
+data.reshape((1,4))
+array([[1, 2, 3, 4]])
+```
+重排只产生视图，产生副本使用`ndarray.copy()`
+**展平**：
+`ndarray.ravel()`：返回数组的视图
+`ndarray.flatten()`：返回数组的副本
+```python
+data=np.array([[1,2],[3,4]])
+data.flatten()
+array([1, 2, 3, 4])
+```
+**折叠**：
+`np.expand_dims(data,axis=)`：在矩阵中添加一个新轴
+`np.vstack(m1,m2,……)`：将行数组堆叠为矩阵
+`np.hstack(m1,m2,……)`：将列数组堆叠为矩阵
+`np.concatenate()`：沿指定轴进行堆叠
+```python
+data=np.arange(0,5,1)
+#垂直堆叠
+np.vstack((data,data,data))
+array([[0, 1, 2, 3, 4],
+       [0, 1, 2, 3, 4],
+       [0, 1, 2, 3, 4]])
+#水平堆叠
+np.hstack((data,data,data))
+array([0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 0, 1, 2, 3, 4])
+```
+**增删**：
+`np.append()`：添加元素
+`np.insert()`：插入元素到指定位置
+`np.delet()`：删除指定位置元素
+
+# 5.向量化
+**广播**：比较两个数组的维度，当前维度相同时，较小的数组可以通过广播匹配较大的数组。
+## 5.1 算数运算
+对于匹配的数组，所有python的二元运算符都作用在每个元素上。
+```python
+x=np.array([[1,2],[3,4]])
+y=np.array([[2,3],[5,6]])
+#数组之间运算
+y/x
+array([[2.        , 1.5       ],
+       [1.66666667, 1.5       ]])
+#标量与数组
+1/x
+array([[1.        , 0.5       ],
+       [0.33333333, 0.25      ]])
+```
+广播：
+```python
+x=np.array([[1,2],[3,4]])
+z=np.array([1,2])
+zz=np.vstack(z,z)
+x/z#自动广播
+array([[1., 1.],
+       [3., 2.]])
+x/zz
+array([[1., 1.],
+       [3., 2.]])
+```
+若`z`为列向量，则会自动沿`axis=1`进行广播
+
+**函数向量化**：
+`np.vectorize()`
+```python
+def func(x):
+    return 1 if x>5 else 0
+
+a=np.arange(1,10,1)
+func=np.vectorize(func)
+func(a)
+array([0, 0, 0, 0, 0, 1, 1, 1, 1])
+#或者使用布尔值数组的运算
+```
+对于只存在计算的函数，一般都可以直接处理数组（作用与逐个元素）。
+## 5.2 聚合函数
+对数组数据的统计计算。所有函数都有对应的方法
+
+| 函数            | 功能   |                      |             |
+| ------------- | ---- | -------------------- | ----------- |
+| np.mean       | 均值   | np.cumsum            | 累计和         |
+| np.average    | 加权平均 | np.cumprod           | 累计积         |
+| np.var        | 方差   | np.max\/np.min       | 最值          |
+| np.std(ddof=) | 标准差  | np.argmax\/np.argmin | 最值索引        |
+| np.sum        | 求和   | np.all               | 全非零，返回True  |
+| np.prod       | 乘积   | np.any               | 存在非零，返回True |
+默认情况，函数会对所有元素进行计算。
+可以使用`axis=`指定进行计算的轴方向。
+## 5.3 布尔数组和条件表达式
+对于两个兼容的数组，使用比较运算符进行计算时（`>,<,>=,<=`），会对对应位置上的元素进行比较，得到一个布尔数组。
+```python
+a=np.array([1,2,3,4])
+b=np.array([4,3,2,1])
+a<b
+array([ True,  True, False, False])
+```
+对整体进行判断时，可以时用`np.all`和`np.any`函数
+
+使用布尔值数组可以完全避免`if`条件语句的使用。当布尔数组参与运算之中时，自动转换成数值数组：$True\rightarrow1,False\rightarrow0$
+例如：分段函数
+```python
+def pules(x,position,height,width):
+	return height*(x>=position)*(x<(position+width))
+
+x=np.linspace(-10,10,100)
+y=pules(x,-5,1,5)
+```
+其中`*`起到`and`运算符的作用
+
+其他的逻辑运算函数：
+`np.where(x<0,x**2,x**3)`：当条件为Ture时选择第一个数组的元素，False选择第二个数组的元素。
+`np.select([x<1,x<=9,x>9],[x,x**2-1,x-2])`：创建更为复杂的分段函数。
+`np.choose([index],ndarry)`：通过索引选择元素。
+使用`lambda`创建函数句柄。
+`np.nonzero()`：非零元素。
+`np.logic_and(),np.logic_or,np.logic_not`：逻辑并，或，非运算。
+## 5.4 集合运算
+`numpy`提供了一些进行集合操作的函数。
+`np.unique()`：返回具有唯一值的新数组
+`np.inld()`：判断子集
+`np.intersectld()`：返回交集
+……
+不如直接使用`set`进行操作`set(x)`
+## 5.5 数组操作
+
+| 函数                     | 功能         |
+| ---------------------- | ---------- |
+| np.transpose/ndarray.T | 转置         |
+| np.rot90               | 将前两个轴旋转90度 |
+| np.sort\/ndarry.sort   | 沿指定轴进行排序   |
+
+# 6.矩阵和向量运算
+## 6.1 基本线性代数运算
+**`linalg`子库**
+1. `numpy.linalg.det`: 计算矩阵的行列式。
+2. `numpy.linalg.eig`: 计算方阵的特征值和右特征向量。
+4. `numpy.linalg.eigvals`: 计算方阵的特征值。
+6. `numpy.linalg.inv`: 计算方阵的逆矩阵。
+10. `numpy.linalg.solve`: 求解线性方程组Ax=b。
+11. `numpy.linalg.tensorinv`: 计算张量的逆。
+12. `numpy.linalg.lstsq`: 计算线性最小二乘问题的解。
+13. `numpy.linalg.eigvalsh`: 计算对称或埃尔米特矩阵的特征值。
+14. `numpy.linalg.pinv`: 计算矩阵的Moore-Penrose伪逆。
+15. `numpy.linalg.qr`: 计算矩阵的QR分解。
+9. `numpy.linalg.svd`: 计算矩阵的奇异值分解（SVD）。
+16. `numpy.linalg.eigh`: 计算对称或埃尔米特矩阵的特征值和特征向量。
+
+## 6.2 矩阵运算
+`np.dot`：向量或矩阵进行矩阵乘法
+使用此函数进行矩阵运算时，对于连乘的表达式会变成嵌套的形式。可以使用`matrix`进行显示的表达。
+```python
+A=np.matrix(A)
+B=np.matrix(B)
+Ap=B*A*B.I#直接就是矩阵乘法
+```
+在`matrix`类型中还有一些简单的属性，`B.I`逆矩阵，`B.H`共轭转置。
+为避免`ndarray`与`matrix`混乱，在使用`matrix`计算结束后，都将结果转化为`ndarray`
+
+`np.inner`：向量内积
+`np.cross`：向量叉乘
+`np.tensordot`：沿指定轴进行点积
+`np.outer`：向量外积
+`np.kron`：对矩阵进行kronecker积
+`np.einsum`：对多维数组进行Einstein求和约定
